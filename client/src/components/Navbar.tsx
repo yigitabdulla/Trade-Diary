@@ -24,6 +24,7 @@ export default function Navbar() {
 
   const handleChange = (event: SelectChangeEvent) => {
     setLanguage(event.target.value as string);
+    localStorage.setItem('language', event.target.value);
   };
 
   return (

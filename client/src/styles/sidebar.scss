@@ -27,7 +27,11 @@
 
             li {
                 cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: start;
                 padding: 15px;
+                gap: 5px;
 
                 &:hover {
                     background-color: $gray-blue-color;

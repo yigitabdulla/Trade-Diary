@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import dummyData from '../data/data2.json';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -14,9 +14,9 @@ import { MenuItem, Select } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
-import { SearchState, Range, DataType } from '../configs/types';
+import { SearchState, DataType } from '../configs/types';
 
-export default function CustomTable() {
+const CustomTable = () => {
   const [dynamicColumns, setDynamicColumns] = useState(Object.keys(dummyData[0] || {}));
   const [originalData] = useState<DataType[]>(dummyData);
   const [filteredData, setFilteredData] = useState<DataType[]>(dummyData);
@@ -63,8 +63,6 @@ export default function CustomTable() {
       }
     }));
   };
-
-
 
   //handling data filters
   useEffect(() => {
@@ -137,10 +135,12 @@ export default function CustomTable() {
 
   //changing column visibility
   const toggleColumnVisibility = (index: number) => {
-    const updated = [...visibleColumns];
-    updated[index] = !updated[index];
-    setVisibleColumns(updated);
-  };
+    setVisibleColumns(prev => {
+    const updated = [...prev];
+    updated.splice(index, 1, !updated.splice(index, 1)[0]);
+    return updated;
+    });
+    };
 
   // Pagination
   const indexOfLastRow = currentPage * rowsPerPage;
@@ -168,7 +168,7 @@ export default function CustomTable() {
 
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+  const handleDrop = (index: number) => {
 
     if (isResizing || draggedColIndex === null || draggedColIndex === index) {
       return;
@@ -270,7 +270,7 @@ export default function CustomTable() {
                       }}
                       onDrop={(e) => {
                         if (!isResizing) {
-                          handleDrop(e, idx);
+                          handleDrop(idx);
                         }
                       }}
                       style={{ padding: 5, height: '80px' }}
@@ -409,3 +409,5 @@ export default function CustomTable() {
     </div>
   );
 }
+
+export default memo(CustomTable);
