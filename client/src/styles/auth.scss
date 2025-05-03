@@ -1,0 +1,129 @@
+@import './variables';
+@import '../responsive.scss';
+
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 350px;
+    gap: 50px;
+    margin-top: 20px;
+
+    .auth-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #d0e8ff, #a0c4ff, #80b1ff);
+
+
+        .auth-tabs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-color: $gray-blue-color;
+            border-radius: 10px 10px 0 0;
+    
+            div {
+                height: 40px;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: background 0.3s ease;
+                font-size: 1rem;
+                color: $white-color;
+                
+                &:first-child {
+                    border-radius: 10px 0 0 0;
+                }
+
+                &:last-child {
+                    border-radius: 0 10px 0 0;
+                }
+
+                &:hover {
+                    background-color: $gray-color;
+                }
+    
+            }
+
+            .active {
+                background-color: $gray-color;
+                transition: 0.3s ease;
+            }
+        }
+
+    }
+
+    
+
+    img {
+        width: 400px;
+        height: 600px;
+        border-radius: 10px;
+        object-fit: contain;
+
+        @include md {
+            display: none;
+        }
+    }
+
+    
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+    min-width: 350px;
+    min-height: 300px;
+    
+
+    .form-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+
+        input {
+            padding: 10px;
+            width: 80%;
+            border: none;
+            border: 1px solid #a7a7a7;
+            border-radius: 5px;
+        }
+
+        a {
+            text-decoration: none;
+            cursor: pointer;
+            color: $text-color;
+            font-size: 1.2rem;
+        }
+
+        button {
+            padding: 10px;
+            width: 85%;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border: none;
+            border-radius: 5px;
+            background-color: $gray-blue-color;
+            font-size: 1rem;
+            color: $white-color;
+
+            &:hover {
+                background-color: $gray-color;
+            };
+        }
+    }
+}

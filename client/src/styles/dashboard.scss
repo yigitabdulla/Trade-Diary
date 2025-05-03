@@ -1,0 +1,13 @@
+@import "./variables.scss";
+
+.dashboard-container {
+    display: flex;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    width: 100%;
+
+    .dashboard {
+        display: flex;
+        flex: 6;
+        background-color: $white-color;
+    }
+}

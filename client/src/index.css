@@ -3,6 +3,9 @@ body {
   padding: 0;
   box-sizing: border-box;
   display: flex;
-  place-items: center;
+  align-items: flex-start;
+  justify-content: center;
   min-height: 100vh;
+  background-color: #F8FAFC;
+  overflow-x: hidden;
 }
