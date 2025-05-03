@@ -28,3 +28,8 @@
         }
     }
 }
+
+body.dark-mode .cta {
+    background-color: $primary-dark-color;
+    color: $text-dark-color;
+}

@@ -28,7 +28,7 @@ const features: FeatureItem[] = [
 const FeaturesSection: React.FC = () => {
   return (
     <section className="features">
-      <div className="container">
+      <div className="features-ontainer">
         <h2>Key Features</h2>
         <div className="features-list">
           {features.map((feature, index) => (

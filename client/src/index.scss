@@ -1,3 +1,5 @@
+@import './styles/_variables.scss';
+
 body {
   margin: 0;
   padding: 0;
@@ -9,3 +11,9 @@ body {
   background-color: #F8FAFC;
   overflow-x: hidden;
 }
+
+body.dark-mode {
+  background-color: $primary-dark-color;
+  color: $text-dark-color;
+}
+

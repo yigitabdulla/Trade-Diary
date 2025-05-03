@@ -7,6 +7,7 @@ import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import { ToastContainer } from "react-toastify";
 import Dashboard from "./pages/Dashboard";
+import Trades from "./pages/Trades";
 
 function App() {
   const router = createBrowserRouter([
@@ -28,7 +29,7 @@ function App() {
         },
         {
           path:"/trades",
-          element:<Dashboard/>
+          element:<Trades/>
         },
         {
           path:"/contact",

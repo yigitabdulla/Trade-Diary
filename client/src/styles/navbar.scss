@@ -4,9 +4,9 @@ nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: rgb(255, 255, 255);
     z-index: 999999;
-    width: 80vw;
+    min-width: 1200px;
+    width: 100%;
 
     a {
         text-decoration: none;
@@ -33,6 +33,21 @@ nav {
             a {
                 text-decoration: none;
                 color: $text-color;
+            }
+        }
+    }
+}
+
+body.dark-mode nav {
+    h1 {
+        color: $text-dark-color;
+    }
+
+    ul {
+        li {
+            color: $text-dark-color;
+            a {
+                color: $text-dark-color;
             }
         }
     }

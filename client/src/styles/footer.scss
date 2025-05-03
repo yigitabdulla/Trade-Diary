@@ -7,3 +7,8 @@ footer {
  font-size: 0.9rem;
  opacity: 0.8;
 }
+
+body.dark-mode footer {
+  background-color: $primary-dark-color;
+  color: $text-dark-color;
+}

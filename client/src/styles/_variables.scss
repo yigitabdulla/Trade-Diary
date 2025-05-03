@@ -8,7 +8,19 @@ $text-color: #4A4A4A;
 $white-color: #F1F5F9;        // Softer white, slightly bluish (good for backgrounds)
 $light-blue-color: #A3C8F4;   // Deeper version of light blue
 $gray-blue-color: #7FA4C2;    // More contrast, still soft for text or borders
-$gray-color: #5A6B7F;  
+$gray-color: #5A6B7F;
+
+//dark mode colors
+$primary-dark-color: #1A1D1F;        // Main dark background
+$secondary-dark-color: #2A2F33;      // Secondary background or card background
+$accent-dark-color: #3D6B82;         // Accent (muted blue, still visible on dark)
+$text-dark-color: #E1E7EB;           // Light gray for readable text
+
+$white-dark-color: #1F2429;          // Near-black with blue tint (used as base "white")
+$light-blue-dark-color: #669ECB;     // Slightly vibrant blue for emphasis
+$gray-blue-dark-color: #5C7B9B;      // Softer than accent, for icons or outlines
+$gray-dark-color: #AABAC6;           // Neutral gray for secondary text
+
 
 $heading-color: $text-color;
 

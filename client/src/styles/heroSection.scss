@@ -121,3 +121,31 @@
         }
     }
 }
+
+body.dark-mode .hero{
+    h1 {
+        color: $text-dark-color;
+    }
+
+    .lead {
+        color: $text-dark-color;
+    }
+
+    .features {
+        color: $text-dark-color;
+    }
+
+    button {
+        &.signup-button {
+            background-color: $accent-dark-color;
+            color: $text-dark-color;
+        }
+
+        &.learn-more-button {
+            background-color: $text-dark-color;
+            color: $white-dark-color;
+        }
+    }
+  }
+
+
