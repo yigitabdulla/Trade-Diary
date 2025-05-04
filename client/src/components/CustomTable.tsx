@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo, useMemo, useCallback } from 'react';
 import dummyData from '../data/data2.json';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,28 +10,33 @@ import Paper from '@mui/material/Paper';
 import "../styles/customTable.scss"
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
-import { MenuItem, Select } from '@mui/material';
+import { Button, MenuItem, Select } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
 import { SearchState, DataType } from '../configs/types';
+import AddTrade from "./AddTrade"
 
 const CustomTable = () => {
   const [dynamicColumns, setDynamicColumns] = useState(Object.keys(dummyData[0] || {}));
   const [originalData] = useState<DataType[]>(dummyData);
-  const [filteredData, setFilteredData] = useState<DataType[]>(dummyData);
   const [columnWidths, setColumnWidths] = useState(dynamicColumns.map(() => 150));
   const [visibleColumns, setVisibleColumns] = useState(dynamicColumns.map(() => true));
   const [search, setSearch] = useState<SearchState>({});
   const [globalSearch, setGlobalSearch] = useState('');
-  const [selectedColumn, setSelectedColumn] = useState('');
-  const [isSortVisible, setIsSortVisible] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'dsc' } | null>(null);
+  const [selectedColumnForSortUI, setSelectedColumnForSortUI] = useState(''); // For controlling which sort dropdown is open
+  const [isSortVisible, setIsSortVisible] = useState(false); // For controlling sort dropdown visibility
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [isResizing, setIsResizing] = useState(false);
   const [draggedColIndex, setDraggedColIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false)
+
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
 
   useEffect(() => {
@@ -49,11 +54,11 @@ const CustomTable = () => {
   }, [])
 
   //State change for single column search
-  const handleSearch = (column: string, value: string) => {
+  const handleSearch = useCallback((column: string, value: string) => {
     setSearch(prev => ({ ...prev, [column]: value }));
-  };
+  }, []);
 
-  const handleRangeSearch = (column: string, bound: 'min' | 'max', value: string) => {
+  const handleRangeSearch = useCallback((column: string, bound: 'min' | 'max', value: string) => {
     const prevColumn = search[column] as { min?: number | ''; max?: number | '' } || {};
     setSearch(prev => ({
       ...prev,
@@ -62,101 +67,134 @@ const CustomTable = () => {
         [bound]: value ? Number(value) : ''
       }
     }));
-  };
+  }, [search]); // Dependency: search state if logic relies on previous range values
 
-  //handling data filters
+  // Debounce global search state update
+  const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState(globalSearch);
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setGlobalSearch(debouncedGlobalSearch);
+    }, 300); // 300ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [debouncedGlobalSearch]);
+
+  // Memoize the filtered data
+  const filteredData = useMemo(() => {
+    console.log("Filtering data..."); // For debugging: check how often this runs
     let filtered = originalData.filter(item =>
       dynamicColumns.every(col => {
-        const searchValue = search[col] || '';
-        const itemValue = String(item[col]).toLowerCase();
+        const searchValue = search[col];
+        const itemValue = item[col];
+        const itemValueString = String(itemValue).toLowerCase();
 
-        // Special case: if the column is 'age' and searchValue is a range
-        if (col === 'price' && typeof searchValue === 'object') {
-          const { min, max } = searchValue;
-          const age = Number(item[col]); //whole column values
-          //console.log(age)
-          return (!min || age >= min) && (!max || age <= max); //returning valus between min and max
+        // Handle range search for 'price'
+        if (col === 'price' && typeof searchValue === 'object' && searchValue !== null) {
+          const { min, max } = searchValue as { min?: number | ''; max?: number | '' };
+          const numericValue = Number(itemValue);
+          const minCheck = (min === '' || min === undefined || min === null) ? true : numericValue >= min;
+          const maxCheck = (max === '' || max === undefined || max === null) ? true : numericValue <= max;
+          return minCheck && maxCheck;
         }
 
-        // Normal string filtering
-        if (typeof searchValue === 'string') {
-          return itemValue.includes(searchValue.toLowerCase());
+        // Handle normal string filtering (ignore empty searches)
+        if (typeof searchValue === 'string' && searchValue) {
+          return itemValueString.includes(searchValue.toLowerCase());
         }
-        //)
+
+        // If no search value for this column, include the item
+        return true;
       })
     );
 
     // Global filtering
     if (globalSearch.trim()) {
+      const lowerGlobalSearch = globalSearch.toLowerCase();
       filtered = filtered.filter(item =>
         dynamicColumns.some(col =>
-          String(item[col]).toLowerCase().includes(globalSearch.toLowerCase())
+          String(item[col]).toLowerCase().includes(lowerGlobalSearch)
         )
       );
     }
+    return filtered;
+  }, [originalData, search, globalSearch, dynamicColumns]);
 
-    setFilteredData(filtered);
+  // Reset page number when filters change
+  useEffect(() => {
     setCurrentPage(1);
-  }, [search, globalSearch, originalData]);
+  }, [search, globalSearch]);
 
 
-  //opening sort selector and setting the corresponding column
-  const handleSort = (column: string) => {
-    setSelectedColumn(column);
-    setIsSortVisible(!isSortVisible);
-  };
+  // Memoize the sorted data based on filtered data and sort config
+  const sortedAndFilteredData = useMemo(() => {
+    console.log("Sorting data..."); // For debugging
+    let sortableItems = [...filteredData];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const aVal = a[sortConfig.key];
+        const bVal = b[sortConfig.key];
 
+        // Handle null or undefined values consistently
+        if (aVal === null || aVal === undefined) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bVal === null || bVal === undefined) return sortConfig.direction === 'asc' ? 1 : -1;
 
-  //sorting data
-  const sortData = (column: string, direction: string) => {
-    const sorted = [...filteredData].sort((a, b) => {
-      const aVal = a[column];
-      const bVal = b[column];
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortConfig.direction === 'asc'
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
 
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return direction === 'asc'
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+        }
 
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return direction === 'asc' ? aVal - bVal : bVal - aVal;
-      }
+        // Fallback to string comparison for mixed types or others
+        return sortConfig.direction === 'asc'
+          ? String(aVal).localeCompare(String(bVal))
+          : String(bVal).localeCompare(String(aVal));
+      });
+    }
+    return sortableItems;
+  }, [filteredData, sortConfig]);
 
-      return 0; // fallback
-    });
-
-    setFilteredData(sorted);
-    setIsSortVisible(false);
-    setSelectedColumn('');
-  };
+  // Update sort config state
+  const requestSort = useCallback((key: string) => {
+    let direction: 'asc' | 'dsc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'dsc';
+    }
+    setSortConfig({ key, direction });
+    setIsSortVisible(false); // Close dropdown after selecting sort
+    setSelectedColumnForSortUI(''); // Reset UI state
+  }, [sortConfig]); // Added sortConfig dependency
 
 
   //changing column visibility
   const toggleColumnVisibility = (index: number) => {
     setVisibleColumns(prev => {
-    const updated = [...prev];
-    updated.splice(index, 1, !updated.splice(index, 1)[0]);
-    return updated;
+      const updated = [...prev];
+      updated.splice(index, 1, !updated.splice(index, 1)[0]);
+      return updated;
     });
-    };
+  };
 
-  // Pagination
-  const indexOfLastRow = currentPage * rowsPerPage;
-  //console.log(indexOfLastRow)
-  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  //console.log(indexOfFirstRow)
-  const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
-  //console.log(currentRows)
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  //console.log(totalPages)
+  // Memoize pagination calculations
+  const totalPages = useMemo(() => Math.ceil(sortedAndFilteredData.length / rowsPerPage), [sortedAndFilteredData.length, rowsPerPage]);
 
-  const handlePageChange = (newPage: number) => {
+  const currentRows = useMemo(() => {
+    const indexOfLastRow = currentPage * rowsPerPage;
+    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+    return sortedAndFilteredData.slice(indexOfFirstRow, indexOfLastRow);
+  }, [sortedAndFilteredData, currentPage, rowsPerPage]);
+
+
+  const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
     }
-  };
+  }, [totalPages, setCurrentPage]); // Include totalPages and setCurrentPage
 
 
   const handleDragStart = (index: number, e: React.DragEvent<HTMLDivElement>) => {
@@ -198,15 +236,47 @@ const CustomTable = () => {
     setColumnWidths(newColumnWidths);
   };
 
-  const handleDelete = (id: number) => {
-    const newData = filteredData.filter(data => data.id !== id)
-    setFilteredData(newData)
-  }
+  const handleDelete = useCallback((id: number) => {
+    // IMPORTANT: This should ideally trigger an update to the *source* of originalData
+    // (e.g., call an API, update parent state via a prop function).
+    // Directly filtering `filteredData` or `sortedAndFilteredData` here will break the flow.
+    // For demonstration, we'll log it. Replace with your actual delete logic.
+    console.log(`Request delete for ID: ${id}`);
+    // Example: If originalData was state:
+    // setOriginalData(prev => prev.filter(item => item.id !== id));
+  }, []); // Add dependencies if your actual delete logic needs them (e.g., a prop function)
 
   const getRangeValue = (column: string, bound: 'min' | 'max') => {
-    const value = search[column];
-    return typeof value === 'object' && value !== null ? value[bound] : '';
+    const range = search[column];
+    // Check if the range object exists for the column
+    if (typeof range === 'object' && range !== null) {
+      // If the specific bound (min/max) exists, return it, otherwise return an empty string.
+      return range[bound] ?? ''; // Use nullish coalescing to handle undefined/null
+    }
+    return '';
   };
+
+  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('darkMode') === 'true')
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsDarkMode(localStorage.getItem('darkMode') === 'true')
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    // optional: handle theme toggle in same tab
+    const observer = new MutationObserver(() => {
+      handleStorageChange()
+    })
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      observer.disconnect()
+    }
+  }, [])
+
 
 
   return (
@@ -219,8 +289,8 @@ const CustomTable = () => {
           className="global-search"
           type="text"
           placeholder="Search..."
-          value={globalSearch}
-          onChange={(e) => setGlobalSearch(e.target.value)}
+          value={debouncedGlobalSearch} // Bind to debounced value for input display
+          onChange={(e) => setDebouncedGlobalSearch(e.target.value)} // Update debounced value on change
         />
 
         <div className="column-selector">
@@ -248,18 +318,31 @@ const CustomTable = () => {
                 actions
               </label>
             </div>
-          )}
+          )} { /* Add Trade Button */ }
+          <Button onClick={handleOpen}>Open modal</Button>
+          <AddTrade isDarkMode={isDarkMode} open={open} handleClose={handleClose}/>
         </div>
       </div>
 
       {isLoading ? <div className='loading'>Data is loading <CircularProgress /></div> : <div className="table-container">
         <TableContainer component={Paper} style={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 450 }} aria-label="custom table">
+          <Table sx={{ minWidth: 450 }} style={{
+            overflowX: 'auto',
+            backgroundColor: document.body.classList.contains('dark-mode') ? '#1e1e1e' : '#fff',
+            color: document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#000'
+          }} aria-label="custom table">
             <TableHead>
               <TableRow>
                 {dynamicColumns.map((column, idx) =>
                   visibleColumns[idx] && (
                     <TableCell
+                      style={{
+                        padding: 5,
+                        height: '80px',
+                        backgroundColor: isDarkMode ? '#1e1e1e' : '#fff',
+                        color: isDarkMode ? '#fff' : '#000',
+                        borderBottom: '1px solid #ccc'
+                      }}
                       key={column}
                       draggable={!isResizing} // disable dragging when resizing
                       onDragStart={(e) => handleDragStart(idx, e)} // pass the event
@@ -273,7 +356,6 @@ const CustomTable = () => {
                           handleDrop(idx);
                         }
                       }}
-                      style={{ padding: 5, height: '80px' }}
                     >
 
                       <ResizableBox
@@ -295,15 +377,19 @@ const CustomTable = () => {
                           <div>
                             <strong>{column[0].toUpperCase() + column.slice(1)}</strong>
                             <span
-                              onClick={() => handleSort(column)}
+                              onClick={() => {
+                                setSelectedColumnForSortUI(column); // Set which column's dropdown to open
+                                setIsSortVisible(prev => !prev); // Toggle dropdown visibility
+                              }}
                               className="sort-icon"
+                              style={{ cursor: 'pointer' }} // Make it clear it's clickable
                             >
                               ↕
                             </span>
-                            {isSortVisible && selectedColumn === column && (
+                            {isSortVisible && selectedColumnForSortUI === column && (
                               <div className="sort-options">
-                                <span onClick={() => sortData(column, 'asc')}>Ascending <p>▲</p></span>
-                                <span onClick={() => sortData(column, 'dsc')}>Descending <p>▼</p></span>
+                                {/* Use requestSort for sorting */}
+                                <span onClick={() => requestSort(column)} style={{ cursor: 'pointer' }}>Sort {sortConfig?.key === column && sortConfig.direction === 'asc' ? 'Descending ▼' : 'Ascending ▲'}</span>
                               </div>
                             )}
                           </div>
@@ -329,6 +415,7 @@ const CustomTable = () => {
                             <input
                               type="text"
                               placeholder={`Search ${column}`}
+                              // Consider debouncing handleSearch if individual column search feels slow
                               value={typeof search[column] === 'string' ? search[column] : ''}
                               onChange={(e) => handleSearch(column, e.target.value)}
                               className="search-input"
@@ -341,22 +428,37 @@ const CustomTable = () => {
                     </TableCell>
                   )
                 )}
-                {visibleColumns[visibleColumns.length - 1] && <TableCell className='actions'><strong>Actions</strong></TableCell>}
+                {visibleColumns[visibleColumns.length - 1] && <TableCell style={{
+                  color: isDarkMode ? '#f0f0f0' : '#000'
+                }} className='actions'><strong>Actions</strong></TableCell>}
               </TableRow>
             </TableHead>
 
             <TableBody>
+              {/* Map over the memoized currentRows */}
               {currentRows.map((row) => (
                 <TableRow key={row.id} className='data-row'>
                   {dynamicColumns.map((col, idx) =>
                     visibleColumns[idx] && (
-                      <TableCell align='left' key={col} style={{ width: columnWidths[idx], border: 'none' }}>
+                      <TableCell align='left' key={col} style={{
+                        width: columnWidths[idx], border: 'none', padding: 8,
+                        height: '80px',
+                        backgroundColor: isDarkMode ? '#2c2c2c' : '#f9f9f9',
+                        color: isDarkMode ? '#f0f0f0' : '#000',
+                        borderBottom: '1px solid #ccc'
+                      }}>
                         {row[col]}
                       </TableCell>
                     )
                   )}
-                  {visibleColumns[visibleColumns.length - 1] && <TableCell align='left'>
-                    <EditOutlinedIcon onClick={() => console.log(row)} style={{ cursor: 'pointer' }} />
+                  {visibleColumns[visibleColumns.length - 1] && <TableCell style={{
+                    padding: 5,
+                    height: '80px',
+                    backgroundColor: isDarkMode ? '#2c2c2c' : '#f9f9f9',
+                    color: isDarkMode ? '#f0f0f0' : '#000',
+                    borderBottom: '1px solid #ccc'
+                  }} align='left'>
+                    <EditOutlinedIcon onClick={() => console.log("Edit:", row)} style={{ cursor: 'pointer' }} />
                     <DeleteOutlinedIcon onClick={() => handleDelete(row.id)} style={{ cursor: 'pointer' }} />
                   </TableCell>}
                 </TableRow>
@@ -373,11 +475,12 @@ const CustomTable = () => {
             Previous
           </button>
 
+          {/* Use the memoized totalPages */}
           <span>
             Page {currentPage} of {totalPages}
           </span>
 
-          <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+          <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage >= totalPages}>
             Next
           </button>
         </div>
@@ -410,4 +513,4 @@ const CustomTable = () => {
   );
 }
 
-export default memo(CustomTable);
+export default memo(CustomTable); // Keep memo wrapper

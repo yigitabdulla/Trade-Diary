@@ -41,3 +41,27 @@ export interface Trade {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface TradeCreateDto {
+  user_id: number;
+  parity: string;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  result_type: 'stop' | 'success';
+  trade_date: Date;
+  value: number;
+}
+
+export interface TradeUpdateDto {
+  id: number;
+  user_id: number;
+  parity: string;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  result_type: 'stop' | 'success';
+  trade_date: Date;
+  value: number;
+  profit_loss: number;
+}

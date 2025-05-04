@@ -1,7 +1,7 @@
 import apiRequest from "../apiRequest";
 import appConfig from "../../configs/app.config";
 
-const login = async (username: string, password: string) => { 
+export const login = async (username: string, password: string) => { 
     try {
         return await apiRequest.post(appConfig.loginEndpoint, {
             username,
@@ -12,7 +12,7 @@ const login = async (username: string, password: string) => {
     }
 }
 
-const signup = async (username: string,email: string, password: string) => {
+export const signup = async (username: string,email: string, password: string) => {
     try {
         return await apiRequest.post(appConfig.signupEndpoint, {
             username,
@@ -24,16 +24,10 @@ const signup = async (username: string,email: string, password: string) => {
     }
 }
 
-const logout = async () => {
+export const logout = async () => {
     try {
         return await apiRequest.post(appConfig.logoutEndpoint);
     } catch (error) {
         console.error(error);
     }
-}
-
-export default {
-    login,
-    signup,
-    logout
 }

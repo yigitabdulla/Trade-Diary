@@ -2,7 +2,7 @@
 import { Avatar, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import '../styles/navbar.scss'
 import Switch from '@mui/material/Switch';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const label = { inputProps: { 'aria-label': 'Mode Switch' } };
@@ -11,9 +11,18 @@ export default function Navbar() {
 
   const [isDarkMode, setIsDarkMode] = useState(false)
 
+  useEffect(() => {
+    const storedMode = localStorage.getItem('darkMode');
+    const darkMode = storedMode === 'true';
+    setIsDarkMode(darkMode);
+    document.body.classList.toggle('dark-mode', darkMode);
+    document.body.classList.toggle('light-mode', !darkMode);
+  }, []);
+
   const handleDarkMode = () => {
     setIsDarkMode((prev) => {
       const newMode = !prev;
+      localStorage.setItem('darkMode', String(newMode));
       document.body.classList.toggle('dark-mode', newMode);
       document.body.classList.toggle('light-mode', !newMode);
       return newMode;

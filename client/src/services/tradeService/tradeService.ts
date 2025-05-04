@@ -1,10 +1,10 @@
 import appConfig from "../../configs/app.config";
-import { Trade } from "../../configs/types";
+import { TradeCreateDto, TradeUpdateDto } from "../../configs/types";
 import apiRequest from "../apiRequest";
 
-const addTrade = async (trade: Trade) => {
+const addTrade = async (trade: TradeCreateDto) => {
     try {
-        return apiRequest.post(appConfig.tradesEndpoint + '/add', trade);
+        return await apiRequest.post(appConfig.tradesEndpoint + '/add', trade);
 
     } catch (error) {
         console.error(error);
@@ -13,16 +13,16 @@ const addTrade = async (trade: Trade) => {
 
 const deleteTrade = async (id: string) => {
     try {
-        return apiRequest.delete(appConfig.tradesEndpoint + '/delete/' + id);
+        return await apiRequest.delete(appConfig.tradesEndpoint + '/delete/:' + id);
 
     } catch (error) {
         console.error(error);
     }
 }
 
-const updateTrade = async (trade: Trade) => {
+const updateTrade = async (trade: TradeUpdateDto) => {
     try {
-        return apiRequest.put(appConfig.tradesEndpoint + '/update', trade);
+        return await apiRequest.put(appConfig.tradesEndpoint + '/update', trade);
 
     } catch (error) {
         console.error(error);
@@ -31,7 +31,7 @@ const updateTrade = async (trade: Trade) => {
 
 const getTrades = async () => {
     try {
-        return apiRequest.get(appConfig.tradesEndpoint + '/get');
+        return await apiRequest.get(appConfig.tradesEndpoint + '/get');
 
     } catch (error) {
         console.error(error);

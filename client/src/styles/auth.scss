@@ -127,3 +127,16 @@
         }
     }
 }
+
+body.dark-mode .auth-container {
+    background-color: $primary-dark-color;
+
+}
+
+body.dark-mode .form-container {
+    .form-item {
+        h1 {
+            color: $text-color;
+        }
+    }
+}
