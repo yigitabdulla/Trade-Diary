@@ -20,11 +20,17 @@
 }
 
 .column-selector {
+    display: flex;
+    gap: 5px;
     position: relative;
 }
 
 .selector-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 8px 16px;
+    height: 40px;
     background-color: #1976d2;
     color: white;
     border: none;

@@ -16,6 +16,8 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
 import { SearchState, DataType } from '../configs/types';
 import AddTrade from "./AddTrade"
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import AddIcon from '@mui/icons-material/Add';
 
 const CustomTable = () => {
   const [dynamicColumns, setDynamicColumns] = useState(Object.keys(dummyData[0] || {}));
@@ -294,33 +296,37 @@ const CustomTable = () => {
         />
 
         <div className="column-selector">
-          <button className="selector-button" onClick={() => setShowColumnSelector(!showColumnSelector)}>
-            Select Columns
-          </button>
-          {showColumnSelector && (
-            <div className="dropdown">
-              {dynamicColumns.map((col, idx) => (
-                <label key={col} className="dropdown-item">
+          <div>
+            <button className='selector-button' onClick={handleOpen}><AddIcon />Add Trade</button>
+            <AddTrade isDarkMode={isDarkMode} open={open} handleClose={handleClose} />
+          </div>
+          <div>
+            <button className="selector-button" onClick={() => setShowColumnSelector(!showColumnSelector)}>
+              <ViewColumnIcon />Select Columns
+            </button>
+            {showColumnSelector && (
+              <div className="dropdown">
+                {dynamicColumns.map((col, idx) => (
+                  <label key={col} className="dropdown-item">
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[idx]}
+                      onChange={() => toggleColumnVisibility(idx)}
+                    />
+                    {col}
+                  </label>
+                ))}
+                <label className='dropdown-item'>
                   <input
                     type="checkbox"
-                    checked={visibleColumns[idx]}
-                    onChange={() => toggleColumnVisibility(idx)}
+                    checked={visibleColumns[visibleColumns.length - 1]}
+                    onChange={() => toggleColumnVisibility(visibleColumns.length - 1)}
                   />
-                  {col}
+                  actions
                 </label>
-              ))}
-              <label className='dropdown-item'>
-                <input
-                  type="checkbox"
-                  checked={visibleColumns[visibleColumns.length - 1]}
-                  onChange={() => toggleColumnVisibility(visibleColumns.length - 1)}
-                />
-                actions
-              </label>
-            </div>
-          )} { /* Add Trade Button */ }
-          <Button onClick={handleOpen}>Open modal</Button>
-          <AddTrade isDarkMode={isDarkMode} open={open} handleClose={handleClose}/>
+              </div>
+            )} { /* Add Trade Button */}
+          </div>
         </div>
       </div>
 
